@@ -42,7 +42,7 @@ def genera_codice_riferimento():
 
 # Funzione per inviare i dati a Google Sheet tramite Apps Script
 def invia_a_google_sheet(nome, importo, tipo_investimento):
-    url = "URL_DEL_TUO_WEB_APP"  # Sostituisci con l'URL del Web App di Google Apps Script
+    url = "https://script.google.com/macros/s/AKfycbxJ7qR7z8OHWt6KSYo2UoRQjRzipiRgRoYS6ecUUOIZCxXOwHIbyiJh3KicCtEjKZEj/exec"  # URL del Web App di Google Apps Script
     payload = {
         'nome': nome,
         'importo': importo,
@@ -74,7 +74,7 @@ def home():
     return '''
         <h1>Generatore di Immagini Personalizzabile</h1>
         <form action="/genera_immagine" method="get">
-            Nome: <input type="text" name="nome" value="Nome Cognome"><br><br>
+            Nome: <input type="text" name="nome" value="Williams Jackob"><br><br>
             Importo: <input type="text" name="importo" value="40.000,00 $"><br><br>
             
             <label>Rendimento Promesso:</label><br>
