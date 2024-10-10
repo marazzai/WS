@@ -47,7 +47,7 @@ def genera_codice_riferimento():
 # Funzione per inviare i dati a Google Sheet tramite Apps Script
 def invia_a_google_sheet(nome, importo, tipo_investimento):
     try:
-        url = "https://script.google.com/macros/s/YOUR_SCRIPT_URL/exec"  # Inserisci l'URL corretto
+        url = "https://script.google.com/macros/s/AKfycbxJ7qR7z8OHWt6KSYo2UoRQjRzipiRgRoYS6ecUUOIZCxXOwHIbyiJh3KicCtEjKZEj/exec"  # Inserisci l'URL corretto
         payload = {
             'nome': nome,
             'importo': importo,
