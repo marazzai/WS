@@ -47,18 +47,25 @@ def genera_codice_riferimento():
 # Funzione per inviare i dati a Google Sheet tramite Apps Script
 def invia_a_google_sheet(nome, importo, tipo_investimento):
     try:
+        # Converti il nome in maiuscolo e sostituisci "_" con spazi
+        nome = nome.replace("_", " ").upper()
+
+        # Rimuovi eventuali simboli e formattazioni dall'importo
+        importo = importo.replace(".", "").replace(",", "").replace("$", "")
+        
         url = "https://script.google.com/macros/s/AKfycbxJ7qR7z8OHWt6KSYo2UoRQjRzipiRgRoYS6ecUUOIZCxXOwHIbyiJh3KicCtEjKZEj/exec"
         payload = {
             'nome': nome,
             'importo': importo,
             'tipo_investimento': tipo_investimento
         }
-        response = requests.post(url, json=payload)  # Manteniamo il payload come JSON per evitare problemi di invio
+        response = requests.post(url, json=payload)  # Cambiato a 'json' per garantire il corretto invio
         response.raise_for_status()  # Solleva un'eccezione se c'è un errore HTTP
         return True
     except Exception as e:
         logging.error(f"Errore durante l'invio dei dati a Google Sheet: {str(e)}")
         return False
+
 
 # Funzione per caricare l'immagine su ImgBB
 def carica_su_imgbb(image_data, api_key):
