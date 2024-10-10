@@ -48,18 +48,32 @@ def genera_codice_riferimento():
 def invia_a_google_sheet(nome, importo, tipo_investimento):
     try:
         url = "https://script.google.com/macros/s/AKfycbxJ7qR7z8OHWt6KSYo2UoRQjRzipiRgRoYS6ecUUOIZCxXOwHIbyiJh3KicCtEjKZEj/exec"
+        
+        # Log dei dati che stiamo per inviare
+        logging.debug(f"Inviando a Google Sheet: nome={nome}, importo={importo}, tipo_investimento={tipo_investimento}")
+        
         payload = {
             'nome': nome,
             'importo': importo,
             'tipo_investimento': tipo_investimento
         }
+        
+        # Effettua la richiesta POST
         response = requests.post(url, data=payload)  # Invia come form-urlencoded
+        logging.debug(f"Risposta dal Google Script: {response.status_code} - {response.text}")
+        
+        # Controlla se ci sono errori nella risposta HTTP
         response.raise_for_status()  # Solleva un'eccezione se c'è un errore HTTP
-        logging.debug(f"Risposta di Google Script: {response.text}")  # Log risposta
+
+        # Se tutto è andato a buon fine, ritorna True
         return True
+    except requests.exceptions.HTTPError as http_err:
+        logging.error(f"Errore HTTP durante l'invio dei dati a Google Sheet: {http_err}")
     except Exception as e:
-        logging.error(f"Errore durante l'invio dei dati a Google Sheet: {str(e)}")
-        return False
+        logging.error(f"Errore generico durante l'invio dei dati a Google Sheet: {str(e)}")
+    
+    # Se c'è stato un errore, ritorna False
+    return False
 
 # Funzione per caricare l'immagine su ImgBB
 def carica_su_imgbb(image_data, api_key):
@@ -83,7 +97,7 @@ def home():
     return '''
         <h1>Generatore di Immagini Personalizzabile</h1>
         <form action="/genera_immagine" method="get">
-            Nome: <input type="text" name="nome" value="Mario Carazzai"><br><br>
+            Nome: <input type="text" name="nome" value="Williams Jackob"><br><br>
             Importo: <input type="text" name="importo" value="40.000,00 $"><br><br>
             
             <label>Rendimento Promesso:</label><br>
