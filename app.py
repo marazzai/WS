@@ -1,13 +1,31 @@
-from flask import Flask, request, send_file
+from flask import Flask, request, send_file, make_response
 from PIL import Image, ImageDraw, ImageFont
 from io import BytesIO
 
 app = Flask(__name__)
 
+# Cache per risorse statiche (immagini e font)
+base_image = None
+fonts_cache = {}
+
+def get_base_image():
+    """Carica e memorizza in cache l'immagine di base."""
+    global base_image
+    if base_image is None:
+        base_image = Image.open("static/image.webp").convert("RGBA")
+    return base_image.copy()
+
+def get_font(name, size):
+    """Carica e memorizza in cache i font."""
+    key = f"{name}-{size}"
+    if key not in fonts_cache:
+        fonts_cache[key] = ImageFont.truetype(f"fonts/{name}.otf", size)
+    return fonts_cache[key]
+
 # Home route con un form HTML per ricevere i dati
 @app.route("/")
 def home():
-    return '''
+    response = make_response('''
         <h1>Generatore di Immagini Personalizzabile</h1>
         <form action="/genera_immagine" method="get">
             Nome: <input type="text" name="nome" value="Williams Jackob"><br><br>
@@ -16,18 +34,20 @@ def home():
             Codice di Riferimento: <input type="text" name="codice" value="101020240017"><br><br>
             
             <label>Rendimento Promesso:</label><br>
-            <input type="radio" id="basso_14gg" name="rendimento" value="BASSO 14gg (25%)" checked>
+            <input type="radio" id="basso_14gg" name="rendimento" value="25%" checked>
             <label for="basso_14gg">BASSO 14gg (25%)</label><br>
-            <input type="radio" id="basso_21gg" name="rendimento" value="BASSO 21gg (37%)">
+            <input type="radio" id="basso_21gg" name="rendimento" value="37%">
             <label for="basso_21gg">BASSO 21gg (37%)</label><br>
-            <input type="radio" id="alto_14gg" name="rendimento" value="ALTO 14gg (rendimento variabile dal 23% al 30%)">
+            <input type="radio" id="alto_14gg" name="rendimento" value="variabile dal 23% al 30%">
             <label for="alto_14gg">ALTO 14gg (rendimento variabile dal 23% al 30%)</label><br>
-            <input type="radio" id="alto_21gg" name="rendimento" value="ALTO 21gg (rendimento variabile dal 34% al 45%)">
+            <input type="radio" id="alto_21gg" name="rendimento" value="variabile dal 34% al 45%">
             <label for="alto_21gg">ALTO 21gg (rendimento variabile dal 34% al 45%)</label><br><br>
 
             <input type="submit" value="Genera Immagine">
         </form>
-    '''
+    ''')
+    response.headers['Cache-Control'] = 'public, max-age=86400'  # Cache per 1 giorno
+    return response
 
 # Route per generare l'immagine personalizzata
 @app.route("/genera_immagine")
@@ -39,15 +59,15 @@ def genera_immagine():
     data_scadenza = request.args.get("data", "31/10/2024")
     codice_riferimento = request.args.get("codice", "101020240017")
 
-    # Carica l'immagine di base
-    image = Image.open("static/image.png").convert("RGBA")
+    # Usa l'immagine e i font dalla cache
+    image = get_base_image()
     txt_layer = Image.new("RGBA", image.size, (255, 255, 255, 0))
     draw = ImageDraw.Draw(txt_layer)
 
-    # Font e dimensioni
-    font_above = ImageFont.truetype("fonts/lumios_typewriter_tape.otf", 326)
-    font_below = ImageFont.truetype("fonts/lumios_typewriter_tape.otf", 326)
-    font_center = ImageFont.truetype("fonts/lumios_typewriter_new.otf", 81)
+    # Font cachati
+    font_above = get_font("lumios_typewriter_tape", 326)
+    font_below = get_font("lumios_typewriter_tape", 326)
+    font_center = get_font("lumios_typewriter_new", 81)
 
     # Colori e trasparenza
     color_above = (134, 81, 0, int(28 * 2.55))
@@ -85,7 +105,9 @@ def genera_immagine():
     filename = f"Immagine_{nome}.png"
 
     # Restituisci l'immagine come file scaricabile con il nome del titolare
-    return send_file(buffer, mimetype="image/png", as_attachment=True, download_name=filename)
+    response = send_file(buffer, mimetype="image/png", as_attachment=True, download_name=filename)
+    response.headers['Cache-Control'] = 'no-store'  # Non cache l'immagine generata
+    return response
 
 if __name__ == "__main__":
     app.run(debug=True)
