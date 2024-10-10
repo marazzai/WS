@@ -54,12 +54,13 @@ def invia_a_google_sheet(nome, importo, tipo_investimento, data_investimento):
             'tipo_investimento': tipo_investimento,
             'data_investimento': data_investimento
         }
-        response = requests.post(url, json=payload)
+        response = requests.post(url, data=payload)  # Usa data anziché json
         response.raise_for_status()
         return True
     except Exception as e:
         logging.error(f"Errore durante l'invio dei dati a Google Sheet: {str(e)}")
         return False
+
 
 # Funzione per caricare l'immagine su ImgBB
 def carica_su_imgbb(image_data, api_key):
