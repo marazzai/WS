@@ -53,8 +53,9 @@ def invia_a_google_sheet(nome, importo, tipo_investimento):
             'importo': importo,
             'tipo_investimento': tipo_investimento
         }
-        response = requests.post(url, json=payload)  # Cambiato a 'json' per garantire il corretto invio
+        response = requests.post(url, data=payload)  # Invia come form-urlencoded
         response.raise_for_status()  # Solleva un'eccezione se c'è un errore HTTP
+        logging.debug(f"Risposta di Google Script: {response.text}")  # Log risposta
         return True
     except Exception as e:
         logging.error(f"Errore durante l'invio dei dati a Google Sheet: {str(e)}")
@@ -82,7 +83,7 @@ def home():
     return '''
         <h1>Generatore di Immagini Personalizzabile</h1>
         <form action="/genera_immagine" method="get">
-            Nome: <input type="text" name="nome" value="Williams Jackob"><br><br>
+            Nome: <input type="text" name="nome" value="Mario Carazzai"><br><br>
             Importo: <input type="text" name="importo" value="40.000,00 $"><br><br>
             
             <label>Rendimento Promesso:</label><br>
