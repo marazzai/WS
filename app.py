@@ -49,12 +49,11 @@ def invia_a_google_sheet(nome, importo, tipo_investimento):
     try:
         url = "https://script.google.com/macros/s/AKfycbxJ7qR7z8OHWt6KSYo2UoRQjRzipiRgRoYS6ecUUOIZCxXOwHIbyiJh3KicCtEjKZEj/exec"
         payload = {
-            'nome': nome.upper().replace("_", " "),  # Converte in maiuscolo e sostituisce _ con spazio
+            'nome': nome,
             'importo': importo,
             'tipo_investimento': tipo_investimento
         }
-        logging.debug(f"Inviando a Google Sheet: nome={payload['nome']}, importo={payload['importo']}, tipo_investimento={payload['tipo_investimento']}")
-        response = requests.post(url, json=payload)  # Cambiato a 'json' per garantire il corretto invio
+        response = requests.post(url, json=payload)  # Manteniamo il payload come JSON per evitare problemi di invio
         response.raise_for_status()  # Solleva un'eccezione se c'è un errore HTTP
         return True
     except Exception as e:
@@ -77,14 +76,13 @@ def carica_su_imgbb(image_data, api_key):
         logging.error(f"Errore durante il caricamento su ImgBB: {str(e)}")
         return None
 
-# Home route con il form per ricevere i dati
 @app.route("/")
 def home():
     return '''
         <h1>Generatore di Immagini Personalizzabile</h1>
         <form action="/genera_immagine" method="get">
             Nome: <input type="text" name="nome" value="Williams Jackob"><br><br>
-            Importo: <input type="text" name="importo" value="40000"><br><br>
+            Importo: <input type="text" name="importo" value="40.000,00 $"><br><br>
             
             <label>Rendimento Promesso:</label><br>
             <input type="radio" id="basso_14gg" name="rendimento" value="BASSO 14GG" checked>
@@ -105,8 +103,8 @@ def home():
 def genera_immagine():
     try:
         # Ottieni i parametri dal form
-        nome = request.args.get("nome", "Williams Jackob").upper().replace("_", " ")  # Maiuscolo con spazi
-        importo = request.args.get("importo", "40000").replace(".", "")  # Importo come numero intero
+        nome = request.args.get("nome", "Williams Jackob")
+        importo = request.args.get("importo", "40000").replace(".", "")  # Rimuovi simboli dall'importo
         rendimento_selezionato = request.args.get("rendimento", "BASSO 14GG")
         
         # Calcola la data di scadenza e genera il codice di riferimento
@@ -132,7 +130,7 @@ def genera_immagine():
 
             # Testo centrale personalizzato
             text_center = [
-                (f"Titolare: {nome}", 871.07, 694.60),
+                (f"Titolare: {nome.replace('_', ' ')}", 871.07, 694.60),
                 (f"Importo Investito: {importo}", 871.07, 806.92),
                 (f"Rendimento Promesso: {rendimento_selezionato}", 871.07, 919.24),
                 (f"Data di Scadenza: {data_scadenza}", 871.07, 1031.56),
@@ -171,13 +169,4 @@ def genera_immagine():
                 return jsonify({"imgbb_url": imgbb_url})
             else:
                 logging.error("Errore nel caricamento su ImgBB")
-                return jsonify({"error": "Errore nel caricamento su ImgBB"}), 500
-        else:
-            logging.error("Errore nell'invio dei dati a Google Sheet")
-            return jsonify({"error": "Errore nell'invio dei dati a Google Sheet"}), 500
-    except Exception as e:
-        logging.error(f"Errore durante la generazione dell'immagine: {str(e)}")
-        return jsonify({"error": "Errore durante la generazione dell'immagine"}), 500
-
-if __name__ == "__main__":
-    app.run(debug=True)
+                return jsonify({"error": "Errore nel caricamento su
