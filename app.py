@@ -169,4 +169,13 @@ def genera_immagine():
                 return jsonify({"imgbb_url": imgbb_url})
             else:
                 logging.error("Errore nel caricamento su ImgBB")
-                return jsonify({"error": "Errore nel caricamento su
+                return jsonify({"error": "Errore nel caricamento su ImgBB"}), 500
+        else:
+            logging.error("Errore nell'invio dei dati a Google Sheet")
+            return jsonify({"error": "Errore nell'invio dei dati a Google Sheet"}), 500
+    except Exception as e:
+        logging.error(f"Errore durante la generazione dell'immagine: {str(e)}")
+        return jsonify({"error": "Errore durante la generazione dell'immagine"}), 500
+
+if __name__ == "__main__":
+    app.run(debug=True)
