@@ -3,6 +3,7 @@ from PIL import Image, ImageDraw, ImageFont
 from io import BytesIO
 from datetime import datetime, timedelta
 import requests
+import base64
 
 app = Flask(__name__)
 
@@ -126,7 +127,7 @@ def genera_immagine():
 
     # Riduci le dimensioni dell'immagine (es. 50% della risoluzione originale)
     new_size = (int(final_image.width * 0.5), int(final_image.height * 0.5))
-    final_image = final_image.resize(new_size, Image.ANTIALIAS)
+    final_image = final_image.resize(new_size, Image.Resampling.LANCZOS)
 
     # Salva l'immagine su un buffer
     buffer = BytesIO()
