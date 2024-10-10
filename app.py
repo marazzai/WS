@@ -31,8 +31,8 @@ def get_font(name, size):
     return fonts_cache[key]
 
 # Funzione per calcolare la data di scadenza basata sul tipo di investimento
-def calcola_data_scadenza(rendimento):
-    giorni = 14 if '14gg' in rendimento else 21
+def calcola_data_scadenza(tipo_investimento):
+    giorni = 14 if '14GG' in tipo_investimento else 21
     fuso_orario_italia = pytz.timezone('Europe/Rome')
     data_attuale = datetime.now(fuso_orario_italia)
     data_scadenza = data_attuale + timedelta(days=giorni)
@@ -106,13 +106,13 @@ def home():
 def genera_immagine():
     try:
         # Ottieni i parametri dal form
-        nome = request.args.get("nome", "Nome Cognome").replace("_", " ").upper()
+        nome = request.args.get("nome", "Nome Cognome").replace("_", " ")
         importo = request.args.get("importo", "40000").replace(".", "").replace(",", "").replace("$", "")
         rendimento_selezionato = request.args.get("rendimento", "25%")
         tipo_investimento = "BASSO 14GG" if rendimento_selezionato == "25%" else "BASSO 21GG" if rendimento_selezionato == "37%" else "ALTO 14GG" if "23%" in rendimento_selezionato else "ALTO 21GG"
         
-        # Calcola la data di scadenza e genera il codice di riferimento
-        data_scadenza = calcola_data_scadenza(rendimento_selezionato)
+        # Calcola la data di scadenza in base al tipo di investimento
+        data_scadenza = calcola_data_scadenza(tipo_investimento)
         codice_riferimento = genera_codice_riferimento()
 
         # Data dell'investimento (la data corrente)
