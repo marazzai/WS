@@ -1,7 +1,8 @@
-from flask import Flask, request, send_file, make_response
+from flask import Flask, request, jsonify
 from PIL import Image, ImageDraw, ImageFont
 from io import BytesIO
 from datetime import datetime, timedelta
+import requests
 
 app = Flask(__name__)
 
@@ -35,10 +36,24 @@ def genera_codice_riferimento():
     now = datetime.now()
     return now.strftime("%d%m%Y%H%M")
 
+# Funzione per caricare l'immagine su ImgBB
+def carica_su_imgbb(image_data, api_key):
+    url = "https://api.imgbb.com/1/upload"
+    payload = {
+        "key": api_key,
+        "image": image_data,
+        "expiration": "0"  # Nessuna scadenza
+    }
+    response = requests.post(url, data=payload)
+    if response.status_code == 200:
+        return response.json()["data"]["url"]
+    else:
+        return None
+
 # Home route con un form HTML per ricevere i dati
 @app.route("/")
 def home():
-    response = make_response('''
+    return '''
         <h1>Generatore di Immagini Personalizzabile</h1>
         <form action="/genera_immagine" method="get">
             Nome: <input type="text" name="nome" value="Williams Jackob"><br><br>
@@ -56,9 +71,7 @@ def home():
 
             <input type="submit" value="Genera Immagine">
         </form>
-    ''')
-    response.headers['Cache-Control'] = 'public, max-age=86400'  # Cache per 1 giorno
-    return response
+    '''
 
 # Route per generare l'immagine personalizzata
 @app.route("/genera_immagine")
@@ -111,18 +124,25 @@ def genera_immagine():
     # Combina il layer di testo con l'immagine di base
     final_image = Image.alpha_composite(image, txt_layer)
 
+    # Riduci le dimensioni dell'immagine (es. 50% della risoluzione originale)
+    new_size = (int(final_image.width * 0.5), int(final_image.height * 0.5))
+    final_image = final_image.resize(new_size, Image.ANTIALIAS)
+
     # Salva l'immagine su un buffer
     buffer = BytesIO()
-    final_image.save(buffer, format="PNG", optimize=True)  # Usa optimize=True per una compressione migliore
+    final_image.save(buffer, format="PNG")
     buffer.seek(0)
 
-    # Nome del file basato sul nome del titolare
-    filename = f"Immagine_{nome}.png"
+    # Codifica l'immagine in base64 per l'upload su ImgBB
+    image_data = base64.b64encode(buffer.getvalue()).decode("utf-8")
 
-    # Restituisci l'immagine come file scaricabile con il nome del titolare
-    response = send_file(buffer, mimetype="image/png", as_attachment=True, download_name=filename)
-    response.headers['Cache-Control'] = 'no-store'  # Non cache l'immagine generata
-    return response
+    # Carica l'immagine su ImgBB
+    imgbb_url = carica_su_imgbb(image_data, "273e469a570fb0c36647319b42b36e7f")
+
+    if imgbb_url:
+        return jsonify({"imgbb_url": imgbb_url})
+    else:
+        return jsonify({"error": "Errore nel caricamento su ImgBB"}), 500
 
 if __name__ == "__main__":
     app.run(debug=True)
