@@ -12,9 +12,19 @@ def home():
         <form action="/genera_immagine" method="get">
             Nome: <input type="text" name="nome" value="Williams Jackob"><br><br>
             Importo: <input type="text" name="importo" value="40.000,00 $"><br><br>
-            Rendimento: <input type="text" name="rendimento" value="45%"><br><br>
             Data di Scadenza: <input type="text" name="data" value="31/10/2024"><br><br>
             Codice di Riferimento: <input type="text" name="codice" value="101020240017"><br><br>
+            
+            <label>Rendimento Promesso:</label><br>
+            <input type="radio" id="basso_14gg" name="rendimento" value="BASSO 14gg (25%)" checked>
+            <label for="basso_14gg">BASSO 14gg (25%)</label><br>
+            <input type="radio" id="basso_21gg" name="rendimento" value="BASSO 21gg (37%)">
+            <label for="basso_21gg">BASSO 21gg (37%)</label><br>
+            <input type="radio" id="alto_14gg" name="rendimento" value="ALTO 14gg (rendimento variabile dal 23% al 30%)">
+            <label for="alto_14gg">ALTO 14gg (rendimento variabile dal 23% al 30%)</label><br>
+            <input type="radio" id="alto_21gg" name="rendimento" value="ALTO 21gg (rendimento variabile dal 34% al 45%)">
+            <label for="alto_21gg">ALTO 21gg (rendimento variabile dal 34% al 45%)</label><br><br>
+
             <input type="submit" value="Genera Immagine">
         </form>
     '''
@@ -25,7 +35,7 @@ def genera_immagine():
     # Ottieni i parametri dal form
     nome = request.args.get("nome", "Williams Jackob").replace(" ", "_")
     importo = request.args.get("importo", "40.000,00 $")
-    rendimento = request.args.get("rendimento", "45%")
+    rendimento_selezionato = request.args.get("rendimento", "BASSO 14gg (25%)")
     data_scadenza = request.args.get("data", "31/10/2024")
     codice_riferimento = request.args.get("codice", "101020240017")
 
@@ -48,7 +58,7 @@ def genera_immagine():
     text_center = [
         (f"Titolare: {nome.replace('_', ' ')}", 871.07, 694.60),
         (f"Importo Investito: {importo}", 871.07, 806.92),
-        (f"Rendimento Promesso: variabile dal 34% al {rendimento}", 871.07, 919.24),
+        (f"Rendimento Promesso: {rendimento_selezionato}", 871.07, 919.24),  # Inserisci il rendimento selezionato
         (f"Data di Scadenza: {data_scadenza}", 871.07, 1031.56),
         (f"Codice di Riferimento Unico: {codice_riferimento}", 871.07, 1143.87)
     ]
@@ -72,7 +82,7 @@ def genera_immagine():
     buffer.seek(0)
 
     # Nome del file basato sul nome del titolare
-    filename = f"{nome}.png"
+    filename = f"Immagine_{nome}.png"
 
     # Restituisci l'immagine come file scaricabile con il nome del titolare
     return send_file(buffer, mimetype="image/png", as_attachment=True, download_name=filename)
