@@ -47,14 +47,14 @@ def genera_codice_riferimento():
 # Funzione per inviare i dati a Google Sheet tramite Apps Script
 def invia_a_google_sheet(nome, importo, tipo_investimento):
     try:
-        url = "https://script.google.com/macros/s/AKfycbxJ7qR7z8OHWt6KSYo2UoRQjRzipiRgRoYS6ecUUOIZCxXOwHIbyiJh3KicCtEjKZEj/exec"
+        url = "https://script.google.com/macros/s/YOUR_SCRIPT_URL/exec"  # Inserisci l'URL corretto
         payload = {
             'nome': nome,
             'importo': importo,
             'tipo_investimento': tipo_investimento
         }
-        response = requests.post(url, json=payload)
-        response.raise_for_status()
+        response = requests.post(url, json=payload)  # Invia i dati come JSON
+        response.raise_for_status()  # Solleva un'eccezione se c'è un errore HTTP
         return True
     except Exception as e:
         logging.error(f"Errore durante l'invio dei dati a Google Sheet: {str(e)}")
@@ -67,7 +67,7 @@ def carica_su_imgbb(image_data, api_key):
         payload = {
             "key": api_key,
             "image": image_data,
-            "expiration": "0"
+            "expiration": "0"  # Nessuna scadenza
         }
         response = requests.post(url, data=payload)
         response.raise_for_status()
@@ -82,17 +82,17 @@ def home():
     return '''
         <h1>Generatore di Immagini Personalizzabile</h1>
         <form action="/genera_immagine" method="get">
-            Nome Cognome: <input type="text" name="nome" value="Mario Rossi"><br><br>
+            Nome: <input type="text" name="nome" value="Nome Cognome"><br><br>
             Importo: <input type="text" name="importo" value="40.000,00 $"><br><br>
             
             <label>Rendimento Promesso:</label><br>
-            <input type="radio" id="basso_14gg" name="rendimento" value="BASSO 14gg (25%)" checked>
+            <input type="radio" id="basso_14gg" name="rendimento" value="25%" checked>
             <label for="basso_14gg">BASSO 14gg (25%)</label><br>
-            <input type="radio" id="basso_21gg" name="rendimento" value="BASSO 21gg (37%)">
+            <input type="radio" id="basso_21gg" name="rendimento" value="37%">
             <label for="basso_21gg">BASSO 21gg (37%)</label><br>
-            <input type="radio" id="alto_14gg" name="rendimento" value="ALTO 14gg (variabile dal 23% al 30%)">
+            <input type="radio" id="alto_14gg" name="rendimento" value="variabile dal 23% al 30%">
             <label for="alto_14gg">ALTO 14gg (variabile dal 23% al 30%)</label><br>
-            <input type="radio" id="alto_21gg" name="rendimento" value="ALTO 21gg (variabile dal 34% al 45%)">
+            <input type="radio" id="alto_21gg" name="rendimento" value="variabile dal 34% al 45%">
             <label for="alto_21gg">ALTO 21gg (variabile dal 34% al 45%)</label><br><br>
 
             <input type="submit" value="Genera Immagine">
@@ -104,22 +104,23 @@ def home():
 def genera_immagine():
     try:
         # Ottieni i parametri dal form
-        nome = request.args.get("nome", "Mario Rossi").upper().replace("_", " ")
-        importo = request.args.get("importo", "40.000,00 $")
-        rendimento_selezionato = request.args.get("rendimento", "BASSO 14gg (25%)")
+        nome = request.args.get("nome", "Nome Cognome").replace("_", " ")
+        importo = request.args.get("importo", "40.000,00 $")  # Formattazione come nell'HTML
+        rendimento_selezionato = request.args.get("rendimento", "25%")
         
         # Calcola la data di scadenza e genera il codice di riferimento
         data_scadenza = calcola_data_scadenza(rendimento_selezionato)
         codice_riferimento = genera_codice_riferimento()
 
-        # Formattazione per il rendimento promesso
-        if "BASSO" in rendimento_selezionato:
-            rendimento_formattato = rendimento_selezionato.split(" ")[-1]
-        else:
-            rendimento_formattato = rendimento_selezionato.split("(")[1].split(")")[0]
-
         # Invia i dati a Google Sheet
-        if invia_a_google_sheet(nome, importo.replace(".", "").replace(",", "").replace("$", ""), rendimento_selezionato):
+        tipo_investimento = "BASSO 14GG" if rendimento_selezionato == "25%" else \
+                            "BASSO 21GG" if rendimento_selezionato == "37%" else \
+                            "ALTO 14GG" if "23%" in rendimento_selezionato else "ALTO 21GG"
+
+        # Rimuovi simboli dall'importo per Google Sheets
+        importo_sheets = ''.join(filter(str.isdigit, importo))
+        
+        if invia_a_google_sheet(nome, importo_sheets, tipo_investimento):
             # Usa l'immagine e i font dalla cache
             image = get_base_image()
             txt_layer = Image.new("RGBA", image.size, (255, 255, 255, 0))
@@ -136,10 +137,12 @@ def genera_immagine():
             color_center = (43, 43, 43, 255)
 
             # Testo centrale personalizzato
+            rendimento_testo = rendimento_selezionato if tipo_investimento.startswith("BASSO") else "variabile dal 34% al 45%" if "ALTO 21GG" in tipo_investimento else "variabile dal 23% al 30%"
+
             text_center = [
                 (f"Titolare: {nome}", 871.07, 694.60),
                 (f"Importo Investito: {importo}", 871.07, 806.92),
-                (f"Rendimento Promesso: {rendimento_formattato}", 871.07, 919.24),
+                (f"Rendimento Promesso: {rendimento_testo}", 871.07, 919.24),
                 (f"Data di Scadenza: {data_scadenza}", 871.07, 1031.56),
                 (f"Codice di Riferimento Unico: {codice_riferimento}", 871.07, 1143.87)
             ]
@@ -170,7 +173,7 @@ def genera_immagine():
             image_data = base64.b64encode(buffer.getvalue()).decode("utf-8")
 
             # Carica l'immagine su ImgBB
-            imgbb_url = carica_su_imgbb(image_data, "273e469a570fb0c36647319b42b36e7f")
+            imgbb_url = carica_su_imgbb(image_data, "YOUR_IMGBB_API_KEY")
 
             if imgbb_url:
                 return jsonify({"imgbb_url": imgbb_url})
