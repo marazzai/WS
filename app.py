@@ -1,6 +1,7 @@
 from flask import Flask, request, send_file, make_response
 from PIL import Image, ImageDraw, ImageFont
 from io import BytesIO
+from datetime import datetime, timedelta
 
 app = Flask(__name__)
 
@@ -22,6 +23,18 @@ def get_font(name, size):
         fonts_cache[key] = ImageFont.truetype(f"fonts/{name}.otf", size)
     return fonts_cache[key]
 
+def calcola_data_scadenza(rendimento):
+    """Calcola la data di scadenza in base al rendimento selezionato (14 o 21 giorni)."""
+    giorni = 14 if '14gg' in rendimento else 21
+    data_attuale = datetime.now()
+    data_scadenza = data_attuale + timedelta(days=giorni)
+    return data_scadenza.strftime("%d/%m/%Y")
+
+def genera_codice_riferimento():
+    """Genera un codice di riferimento unico basato sulla data e ora attuale."""
+    now = datetime.now()
+    return now.strftime("%d%m%Y%H%M")
+
 # Home route con un form HTML per ricevere i dati
 @app.route("/")
 def home():
@@ -30,18 +43,16 @@ def home():
         <form action="/genera_immagine" method="get">
             Nome: <input type="text" name="nome" value="Williams Jackob"><br><br>
             Importo: <input type="text" name="importo" value="40.000,00 $"><br><br>
-            Data di Scadenza: <input type="text" name="data" value="31/10/2024"><br><br>
-            Codice di Riferimento: <input type="text" name="codice" value="101020240017"><br><br>
             
             <label>Rendimento Promesso:</label><br>
-            <input type="radio" id="basso_14gg" name="rendimento" value="25%" checked>
+            <input type="radio" id="basso_14gg" name="rendimento" value="BASSO 14gg (25%)" checked>
             <label for="basso_14gg">BASSO 14gg (25%)</label><br>
-            <input type="radio" id="basso_21gg" name="rendimento" value="37%">
+            <input type="radio" id="basso_21gg" name="rendimento" value="BASSO 21gg (37%)">
             <label for="basso_21gg">BASSO 21gg (37%)</label><br>
-            <input type="radio" id="alto_14gg" name="rendimento" value="variabile dal 23% al 30%">
-            <label for="alto_14gg">ALTO 14gg (rendimento variabile dal 23% al 30%)</label><br>
-            <input type="radio" id="alto_21gg" name="rendimento" value="variabile dal 34% al 45%">
-            <label for="alto_21gg">ALTO 21gg (rendimento variabile dal 34% al 45%)</label><br><br>
+            <input type="radio" id="alto_14gg" name="rendimento" value="ALTO 14gg (variabile dal 23% al 30%)">
+            <label for="alto_14gg">ALTO 14gg (variabile dal 23% al 30%)</label><br>
+            <input type="radio" id="alto_21gg" name="rendimento" value="ALTO 21gg (variabile dal 34% al 45%)">
+            <label for="alto_21gg">ALTO 21gg (variabile dal 34% al 45%)</label><br><br>
 
             <input type="submit" value="Genera Immagine">
         </form>
@@ -56,8 +67,12 @@ def genera_immagine():
     nome = request.args.get("nome", "Williams Jackob").replace(" ", "_")
     importo = request.args.get("importo", "40.000,00 $")
     rendimento_selezionato = request.args.get("rendimento", "BASSO 14gg (25%)")
-    data_scadenza = request.args.get("data", "31/10/2024")
-    codice_riferimento = request.args.get("codice", "101020240017")
+    
+    # Calcola la data di scadenza in base alla selezione
+    data_scadenza = calcola_data_scadenza(rendimento_selezionato)
+    
+    # Genera il codice di riferimento
+    codice_riferimento = genera_codice_riferimento()
 
     # Usa l'immagine e i font dalla cache
     image = get_base_image()
@@ -98,7 +113,7 @@ def genera_immagine():
 
     # Salva l'immagine su un buffer
     buffer = BytesIO()
-    final_image.save(buffer, format="PNG")
+    final_image.save(buffer, format="PNG", optimize=True)  # Usa optimize=True per una compressione migliore
     buffer.seek(0)
 
     # Nome del file basato sul nome del titolare
