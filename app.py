@@ -48,32 +48,18 @@ def genera_codice_riferimento():
 def invia_a_google_sheet(nome, importo, tipo_investimento):
     try:
         url = "https://script.google.com/macros/s/AKfycbxJ7qR7z8OHWt6KSYo2UoRQjRzipiRgRoYS6ecUUOIZCxXOwHIbyiJh3KicCtEjKZEj/exec"
-        
-        # Log dei dati che stiamo per inviare
-        logging.debug(f"Inviando a Google Sheet: nome={nome}, importo={importo}, tipo_investimento={tipo_investimento}")
-        
         payload = {
-            'nome': nome,
+            'nome': nome.upper().replace("_", " "),  # Converte in maiuscolo e sostituisce _ con spazio
             'importo': importo,
             'tipo_investimento': tipo_investimento
         }
-        
-        # Effettua la richiesta POST
-        response = requests.post(url, data=payload)  # Invia come form-urlencoded
-        logging.debug(f"Risposta dal Google Script: {response.status_code} - {response.text}")
-        
-        # Controlla se ci sono errori nella risposta HTTP
+        logging.debug(f"Inviando a Google Sheet: nome={payload['nome']}, importo={payload['importo']}, tipo_investimento={payload['tipo_investimento']}")
+        response = requests.post(url, json=payload)  # Cambiato a 'json' per garantire il corretto invio
         response.raise_for_status()  # Solleva un'eccezione se c'è un errore HTTP
-
-        # Se tutto è andato a buon fine, ritorna True
         return True
-    except requests.exceptions.HTTPError as http_err:
-        logging.error(f"Errore HTTP durante l'invio dei dati a Google Sheet: {http_err}")
     except Exception as e:
-        logging.error(f"Errore generico durante l'invio dei dati a Google Sheet: {str(e)}")
-    
-    # Se c'è stato un errore, ritorna False
-    return False
+        logging.error(f"Errore durante l'invio dei dati a Google Sheet: {str(e)}")
+        return False
 
 # Funzione per caricare l'immagine su ImgBB
 def carica_su_imgbb(image_data, api_key):
@@ -98,16 +84,16 @@ def home():
         <h1>Generatore di Immagini Personalizzabile</h1>
         <form action="/genera_immagine" method="get">
             Nome: <input type="text" name="nome" value="Williams Jackob"><br><br>
-            Importo: <input type="text" name="importo" value="40.000,00 $"><br><br>
+            Importo: <input type="text" name="importo" value="40000"><br><br>
             
             <label>Rendimento Promesso:</label><br>
-            <input type="radio" id="basso_14gg" name="rendimento" value="25%" checked>
+            <input type="radio" id="basso_14gg" name="rendimento" value="BASSO 14GG" checked>
             <label for="basso_14gg">BASSO 14gg (25%)</label><br>
-            <input type="radio" id="basso_21gg" name="rendimento" value="37%">
+            <input type="radio" id="basso_21gg" name="rendimento" value="BASSO 21GG">
             <label for="basso_21gg">BASSO 21gg (37%)</label><br>
-            <input type="radio" id="alto_14gg" name="rendimento" value="variabile dal 23% al 30%">
+            <input type="radio" id="alto_14gg" name="rendimento" value="ALTO 14GG">
             <label for="alto_14gg">ALTO 14gg (variabile dal 23% al 30%)</label><br>
-            <input type="radio" id="alto_21gg" name="rendimento" value="variabile dal 34% al 45%">
+            <input type="radio" id="alto_21gg" name="rendimento" value="ALTO 21GG">
             <label for="alto_21gg">ALTO 21gg (variabile dal 34% al 45%)</label><br><br>
 
             <input type="submit" value="Genera Immagine">
@@ -119,9 +105,9 @@ def home():
 def genera_immagine():
     try:
         # Ottieni i parametri dal form
-        nome = request.args.get("nome", "Williams Jackob").replace(" ", "_")
-        importo = request.args.get("importo", "40000").replace(".", "")  # Rimuovi simboli dall'importo
-        rendimento_selezionato = request.args.get("rendimento", "25%")
+        nome = request.args.get("nome", "Williams Jackob").upper().replace("_", " ")  # Maiuscolo con spazi
+        importo = request.args.get("importo", "40000").replace(".", "")  # Importo come numero intero
+        rendimento_selezionato = request.args.get("rendimento", "BASSO 14GG")
         
         # Calcola la data di scadenza e genera il codice di riferimento
         data_scadenza = calcola_data_scadenza(rendimento_selezionato)
@@ -146,7 +132,7 @@ def genera_immagine():
 
             # Testo centrale personalizzato
             text_center = [
-                (f"Titolare: {nome.replace('_', ' ')}", 871.07, 694.60),
+                (f"Titolare: {nome}", 871.07, 694.60),
                 (f"Importo Investito: {importo}", 871.07, 806.92),
                 (f"Rendimento Promesso: {rendimento_selezionato}", 871.07, 919.24),
                 (f"Data di Scadenza: {data_scadenza}", 871.07, 1031.56),
