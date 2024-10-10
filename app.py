@@ -45,16 +45,17 @@ def genera_codice_riferimento():
     return now.strftime("%d%m%Y%H%M")
 
 # Funzione per inviare i dati a Google Sheet tramite Apps Script
-def invia_a_google_sheet(nome, importo, tipo_investimento):
+def invia_a_google_sheet(nome, importo, tipo_investimento, data_investimento):
     try:
-        url = "https://script.google.com/macros/s/AKfycbxJ7qR7z8OHWt6KSYo2UoRQjRzipiRgRoYS6ecUUOIZCxXOwHIbyiJh3KicCtEjKZEj/exec"  # Inserisci l'URL corretto
+        url = "https://script.google.com/macros/s/AKfycbxJ7qR7z8OHWt6KSYo2UoRQjRzipiRgRoYS6ecUUOIZCxXOwHIbyiJh3KicCtEjKZEj/exec"
         payload = {
             'nome': nome,
             'importo': importo,
-            'tipo_investimento': tipo_investimento
+            'tipo_investimento': tipo_investimento,
+            'data_investimento': data_investimento
         }
-        response = requests.post(url, json=payload)  # Invia i dati come JSON
-        response.raise_for_status()  # Solleva un'eccezione se c'è un errore HTTP
+        response = requests.post(url, json=payload)
+        response.raise_for_status()
         return True
     except Exception as e:
         logging.error(f"Errore durante l'invio dei dati a Google Sheet: {str(e)}")
@@ -104,23 +105,21 @@ def home():
 def genera_immagine():
     try:
         # Ottieni i parametri dal form
-        nome = request.args.get("nome", "Nome Cognome").replace("_", " ")
-        importo = request.args.get("importo", "40.000,00 $")  # Formattazione come nell'HTML
+        nome = request.args.get("nome", "Nome Cognome").replace("_", " ").upper()
+        importo = request.args.get("importo", "40000").replace(".", "").replace(",", "").replace("$", "")
         rendimento_selezionato = request.args.get("rendimento", "25%")
+        tipo_investimento = "BASSO 14GG" if rendimento_selezionato == "25%" else "BASSO 21GG" if rendimento_selezionato == "37%" else "ALTO 14GG" if "23%" in rendimento_selezionato else "ALTO 21GG"
         
         # Calcola la data di scadenza e genera il codice di riferimento
         data_scadenza = calcola_data_scadenza(rendimento_selezionato)
         codice_riferimento = genera_codice_riferimento()
 
-        # Invia i dati a Google Sheet
-        tipo_investimento = "BASSO 14GG" if rendimento_selezionato == "25%" else \
-                            "BASSO 21GG" if rendimento_selezionato == "37%" else \
-                            "ALTO 14GG" if "23%" in rendimento_selezionato else "ALTO 21GG"
+        # Data dell'investimento (la data corrente)
+        fuso_orario_italia = pytz.timezone('Europe/Rome')
+        data_investimento = datetime.now(fuso_orario_italia).strftime("%d/%m/%Y")
 
-        # Rimuovi simboli dall'importo per Google Sheets
-        importo_sheets = ''.join(filter(str.isdigit, importo))
-        
-        if invia_a_google_sheet(nome, importo_sheets, tipo_investimento):
+        # Invia i dati a Google Sheet
+        if invia_a_google_sheet(nome, importo, tipo_investimento, data_investimento):
             # Usa l'immagine e i font dalla cache
             image = get_base_image()
             txt_layer = Image.new("RGBA", image.size, (255, 255, 255, 0))
@@ -137,12 +136,10 @@ def genera_immagine():
             color_center = (43, 43, 43, 255)
 
             # Testo centrale personalizzato
-            rendimento_testo = rendimento_selezionato if tipo_investimento.startswith("BASSO") else "variabile dal 34% al 45%" if "ALTO 21GG" in tipo_investimento else "variabile dal 23% al 30%"
-
             text_center = [
                 (f"Titolare: {nome}", 871.07, 694.60),
-                (f"Importo Investito: {importo}", 871.07, 806.92),
-                (f"Rendimento Promesso: {rendimento_testo}", 871.07, 919.24),
+                (f"Importo Investito: {request.args.get('importo', '40.000,00 $')}", 871.07, 806.92),
+                (f"Rendimento Promesso: {'variabile dal 23% al 30%' if '23%' in rendimento_selezionato else rendimento_selezionato}", 871.07, 919.24),
                 (f"Data di Scadenza: {data_scadenza}", 871.07, 1031.56),
                 (f"Codice di Riferimento Unico: {codice_riferimento}", 871.07, 1143.87)
             ]
@@ -173,7 +170,7 @@ def genera_immagine():
             image_data = base64.b64encode(buffer.getvalue()).decode("utf-8")
 
             # Carica l'immagine su ImgBB
-            imgbb_url = carica_su_imgbb(image_data, "YOUR_IMGBB_API_KEY")
+            imgbb_url = carica_su_imgbb(image_data, "273e469a570fb0c36647319b42b36e7f")
 
             if imgbb_url:
                 return jsonify({"imgbb_url": imgbb_url})
