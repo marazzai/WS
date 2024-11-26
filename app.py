@@ -54,35 +54,36 @@ def invia_a_google_sheet(nome, importo, tipo_investimento, data_investimento):
             'tipo_investimento': tipo_investimento,
             'data_investimento': data_investimento
         }
-        response = requests.post(url, data=payload)  # Usa data anziché json
+        response = requests.post(url, data=payload)
         response.raise_for_status()
         return True
     except Exception as e:
         logging.error(f"Errore durante l'invio dei dati a Google Sheet: {str(e)}")
         return False
 
-
-# Funzione per caricare l'immagine su ImgBB
-def carica_su_imgbb(image_data, api_key):
+# Funzione per caricare l'immagine su FiveManage
+def carica_su_fivemanage(image_buffer, api_key):
     try:
-        url = "https://api.imgbb.com/1/upload"
-        payload = {
-            "key": api_key,
-            "image": image_data,
-            "expiration": "0"  # Nessuna scadenza
+        # Endpoint per l'upload dell'immagine
+        url = "https://api.fivemanage.com/api/image"
+
+        headers = {
+            "Authorization": f"Bearer {api_key}"
         }
 
-        logging.debug(f"Inviando richiesta a ImgBB: {url} con payload: {payload}")
-        response = requests.post(url, data=payload)
+        # L'immagine deve essere inviata come parte di `multipart/form-data`
+        files = {
+            "image": ("image.png", image_buffer, "image/png")
+        }
 
-        logging.debug(f"Risposta da ImgBB: Status Code {response.status_code}, Contenuto {response.text}")
-
+        response = requests.post(url, headers=headers, files=files)
         response.raise_for_status()
-        return response.json()["data"]["url"]
-    except Exception as e:
-        logging.error(f"Errore durante il caricamento su ImgBB: {str(e)}")
-        return None
 
+        # Supponendo che la risposta contenga il link all'immagine caricata
+        return response.json().get("url")
+    except Exception as e:
+        logging.error(f"Errore durante il caricamento su FiveManage: {str(e)}")
+        return None
 
 # Home route con il form per ricevere i dati
 @app.route("/")
@@ -173,17 +174,14 @@ def genera_immagine():
             final_image.save(buffer, format="PNG")
             buffer.seek(0)
 
-            # Codifica l'immagine in base64 per l'upload su ImgBB
-            image_data = base64.b64encode(buffer.getvalue()).decode("utf-8")
-
-            # Carica l'immagine su ImgBB
-            imgbb_url = carica_su_imgbb(image_data, "fc7eae290ed28cda8d3978042b11c356")
+            # Carica l'immagine su FiveManage
+            imgbb_url = carica_su_fivemanage(buffer, "LvTU9eoJ9aVelrBG7ClyjbaAifIvhxHi")
 
             if imgbb_url:
                 return jsonify({"imgbb_url": imgbb_url})
             else:
-                logging.error("Errore nel caricamento su ImgBB")
-                return jsonify({"error": "Errore nel caricamento su ImgBB"}), 500
+                logging.error("Errore nel caricamento su FiveManage")
+                return jsonify({"error": "Errore nel caricamento su FiveManage"}), 500
         else:
             logging.error("Errore nell'invio dei dati a Google Sheet")
             return jsonify({"error": "Errore nell'invio dei dati a Google Sheet"}), 500
