@@ -67,23 +67,32 @@ def carica_su_fivemanage(image_buffer, api_key):
         # Endpoint per l'upload dell'immagine
         url = "https://api.fivemanage.com/api/image"
 
+        # Header di autorizzazione
         headers = {
-            "Authorization": f"Bearer {api_key}"
+            "Authorization": api_key
         }
 
         # L'immagine deve essere inviata come parte di `multipart/form-data`
         files = {
-            "image": ("image.png", image_buffer, "image/png")
+            "file": ("image.png", image_buffer, "image/png")
         }
 
+        # Esegui la richiesta POST
         response = requests.post(url, headers=headers, files=files)
         response.raise_for_status()
 
-        # Supponendo che la risposta contenga il link all'immagine caricata
+        # Log di debug per visualizzare la risposta
+        logging.debug(f"Risposta da FiveManage: {response.text}")
+
+        # Restituisci il URL dell'immagine se tutto va bene
         return response.json().get("url")
+    except requests.exceptions.HTTPError as http_err:
+        logging.error(f"Errore durante il caricamento su FiveManage: {http_err}, Risposta: {response.text}")
+        return None
     except Exception as e:
         logging.error(f"Errore durante il caricamento su FiveManage: {str(e)}")
         return None
+
 
 # Home route con il form per ricevere i dati
 @app.route("/")
