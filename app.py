@@ -171,7 +171,7 @@ def genera_immagine():
             image_data = base64.b64encode(buffer.getvalue()).decode("utf-8")
 
             # Carica l'immagine su ImgBB
-            imgbb_url = carica_su_imgbb(image_data, "273e469a570fb0c36647319b42b36e7f")
+            imgbb_url = carica_su_imgbb(image_data, "448eeaa34042862588ea97b2246b9b69")
 
             if imgbb_url:
                 return jsonify({"imgbb_url": imgbb_url})
