@@ -71,12 +71,18 @@ def carica_su_imgbb(image_data, api_key):
             "image": image_data,
             "expiration": "0"  # Nessuna scadenza
         }
+
+        logging.debug(f"Inviando richiesta a ImgBB: {url} con payload: {payload}")
         response = requests.post(url, data=payload)
+
+        logging.debug(f"Risposta da ImgBB: Status Code {response.status_code}, Contenuto {response.text}")
+
         response.raise_for_status()
         return response.json()["data"]["url"]
     except Exception as e:
         logging.error(f"Errore durante il caricamento su ImgBB: {str(e)}")
         return None
+
 
 # Home route con il form per ricevere i dati
 @app.route("/")
