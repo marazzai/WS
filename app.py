@@ -30,9 +30,14 @@ def get_font(name, size):
         fonts_cache[key] = ImageFont.truetype(f"fonts/{name}.otf", size)
     return fonts_cache[key]
 
-# Funzione per calcolare la data di scadenza basata sul tipo di investimento
+# Funzione aggiornata per calcolare la data di scadenza basata sul tipo di investimento
 def calcola_data_scadenza(tipo_investimento):
-    giorni = 14 if '14GG' in tipo_investimento else 21
+    if '7GG' in tipo_investimento:
+        giorni = 7
+    elif '14GG' in tipo_investimento:
+        giorni = 14
+    else:
+        giorni = 21
     fuso_orario_italia = pytz.timezone('Europe/Rome')
     data_attuale = datetime.now(fuso_orario_italia)
     data_scadenza = data_attuale + timedelta(days=giorni)
@@ -94,7 +99,7 @@ def carica_su_fivemanage(image_buffer, api_key):
         return None
 
 
-# Home route con il form per ricevere i dati
+# Route per la home page con il form aggiornato
 @app.route("/")
 def home():
     return '''
@@ -104,6 +109,8 @@ def home():
             Importo: <input type="text" name="importo" value="40.000,00 $"><br><br>
             
             <label>Rendimento Promesso:</label><br>
+            <input type="radio" id="basso_7gg" name="rendimento" value="12.5%">
+            <label for="basso_7gg">BASSO 7gg (20%)</label><br>
             <input type="radio" id="basso_14gg" name="rendimento" value="25%" checked>
             <label for="basso_14gg">BASSO 14gg (25%)</label><br>
             <input type="radio" id="basso_21gg" name="rendimento" value="37%">
@@ -125,8 +132,26 @@ def genera_immagine():
         nome = request.args.get("nome", "Nome Cognome").replace("_", " ")
         importo = request.args.get("importo", "40000").replace(".", "").replace(",", "").replace("$", "")
         rendimento_selezionato = request.args.get("rendimento", "25%")
-        tipo_investimento = "BASSO 14GG" if rendimento_selezionato == "25%" else "BASSO 21GG" if rendimento_selezionato == "37%" else "ALTO 14GG" if "23%" in rendimento_selezionato else "ALTO 21GG"
         
+        # Mappa il rendimento selezionato al tipo di investimento
+        if rendimento_selezionato == "12.5%":
+            tipo_investimento = "BASSO 7GG"
+        elif rendimento_selezionato == "25%":
+            tipo_investimento = "BASSO 14GG"
+        elif rendimento_selezionato == "37%":
+            tipo_investimento = "BASSO 21GG"
+        elif "23%" in rendimento_selezionato:
+            tipo_investimento = "ALTO 14GG"
+        elif "34%" in rendimento_selezionato:
+            tipo_investimento = "ALTO 21GG"
+        else:
+            tipo_investimento = "UNKNOWN"
+
+        # Verifica se il tipo di investimento è stato riconosciuto
+        if tipo_investimento == "UNKNOWN":
+            logging.error("Tipo di investimento non riconosciuto")
+            return jsonify({"error": "Tipo di investimento non riconosciuto"}), 400
+
         # Calcola la data di scadenza in base al tipo di investimento
         data_scadenza = calcola_data_scadenza(tipo_investimento)
         codice_riferimento = genera_codice_riferimento()
