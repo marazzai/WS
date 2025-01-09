@@ -3,7 +3,6 @@ from flask import Flask, request, jsonify
 from PIL import Image, ImageDraw, ImageFont
 from io import BytesIO
 from datetime import datetime, timedelta
-import base64
 import pytz
 import requests
 
@@ -110,7 +109,7 @@ def home():
             
             <label>Rendimento Promesso:</label><br>
             <input type="radio" id="basso_7gg" name="rendimento" value="12.5%">
-            <label for="basso_7gg">BASSO 7gg (20%)</label><br>
+            <label for="basso_7gg">BASSO 7gg (12.5%)</label><br>
             <input type="radio" id="basso_14gg" name="rendimento" value="25%" checked>
             <label for="basso_14gg">BASSO 14gg (25%)</label><br>
             <input type="radio" id="basso_21gg" name="rendimento" value="37%">
@@ -133,6 +132,9 @@ def genera_immagine():
         importo = request.args.get("importo", "40000").replace(".", "").replace(",", "").replace("$", "")
         rendimento_selezionato = request.args.get("rendimento", "25%")
         
+        # Aggiungi log per debug
+        logging.debug(f"Rendimento Selezionato: {rendimento_selezionato}")
+
         # Mappa il rendimento selezionato al tipo di investimento
         if rendimento_selezionato == "12.5%":
             tipo_investimento = "BASSO 7GG"
@@ -146,6 +148,9 @@ def genera_immagine():
             tipo_investimento = "ALTO 21GG"
         else:
             tipo_investimento = "UNKNOWN"
+
+        # Aggiungi log per debug
+        logging.debug(f"Tipo di Investimento Mappato: {tipo_investimento}")
 
         # Verifica se il tipo di investimento è stato riconosciuto
         if tipo_investimento == "UNKNOWN":
