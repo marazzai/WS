@@ -53,6 +53,7 @@ def invia_a_google_sheet(nome, importo, tipo_investimento, data_investimento):
             'tipo_investimento': tipo_investimento,
             'data_investimento': data_investimento
         }
+        logging.debug(f"Payload inviato a Google Sheets: {payload}")
         response = requests.post(url, data=payload)
         response.raise_for_status()
         return True
@@ -86,23 +87,27 @@ def home():
 def genera_immagine():
     try:
         nome = request.args.get("nome", "Nome Cognome").replace("_", " ")
-        importo = request.args.get("importo", "40000").replace(".", "").replace(",", "").replace("$", "")
-        rendimento_selezionato = request.args.get("rendimento", "11%")
+        importo = request.args.get("importo", "40000").strip()
 
-        # Mappa il rendimento selezionato al tipo di investimento
+        # Normalizza l'importo
+        importo = importo.replace(".", "").replace(",", "").replace("$", "")
+        if importo.isdigit():
+            importo = int(importo)
+        else:
+            logging.error("Importo non valido: " + importo)
+            return jsonify({"error": "Importo non valido"}), 400
+
+        rendimento_selezionato = request.args.get("rendimento", "11%")
         tipo_investimento = "BASSO 7GG" if rendimento_selezionato == "11%" else \
                             "BASSO 14GG" if rendimento_selezionato == "25%" else \
                             "BASSO 21GG"
 
-        # Calcola la data di scadenza
         data_scadenza = calcola_data_scadenza(tipo_investimento)
         codice_riferimento = genera_codice_riferimento()
 
-        # Data dell'investimento
         fuso_orario_italia = pytz.timezone('Europe/Rome')
         data_investimento = datetime.now(fuso_orario_italia).strftime("%d/%m/%Y")
 
-        # Invia i dati a Google Sheet
         if invia_a_google_sheet(nome, importo, tipo_investimento, data_investimento):
             return jsonify({"success": True, "message": "Dati inviati con successo"})
         else:
