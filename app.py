@@ -110,7 +110,7 @@ def home():
             
             <label>Rendimento Promesso:</label><br>
             <input type="radio" id="7gg" name="rendimento" value="11%">
-            <label for="basso_7gg">BASSO 7gg (11%)</label><br>
+            <label for="7gg">7gg (11%)</label><br>
             <input type="radio" id="basso_14gg" name="rendimento" value="25%" checked>
             <label for="basso_14gg">BASSO 14gg (25%)</label><br>
             <input type="radio" id="basso_21gg" name="rendimento" value="37%">
@@ -136,7 +136,7 @@ def genera_immagine():
         logging.debug(f"Rendimento Selezionato: {rendimento_selezionato}")
         # Mappa il rendimento selezionato al tipo di investimento
         if rendimento_selezionato == "11%":
-            tipo_investimento = "BASSO 7GG"
+            tipo_investimento = "7GG"
         elif rendimento_selezionato == "25%":
             tipo_investimento = "BASSO 14GG"
         elif rendimento_selezionato == "37%":
