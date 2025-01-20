@@ -109,7 +109,7 @@ def home():
             Importo: <input type="text" name="importo" value="40.000,00 $"><br><br>
             
             <label>Rendimento Promesso:</label><br>
-            <input type="radio" id="basso_7gg" name="rendimento" value="11%">
+            <input type="radio" id="7gg" name="rendimento" value="11%">
             <label for="basso_7gg">BASSO 7gg (11%)</label><br>
             <input type="radio" id="basso_14gg" name="rendimento" value="25%" checked>
             <label for="basso_14gg">BASSO 14gg (25%)</label><br>
